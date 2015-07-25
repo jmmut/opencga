@@ -107,12 +107,16 @@ public class VariantExporter {
                 VariantContext variantContext = convertBiodataVariantToVariantContext(variant);
                 writer.add(variantContext);
             } catch (Exception e) {
+                logger.debug(variant.getChromosome() + ":" + variant.getStart() + "-" + variant.getEnd() + " " + e.toString());
                 failedVariants++;
             }
         }
 
         if (failedVariants > 0) {
             logger.warn(failedVariants + " variants were not written due to errors");
+            logger.info("possible explanations:" +
+                    "\n\t\"Null alleles are not supported\": indels like TA -> T are stored like A->\"\", add ori:\"TA\tT\" to attributes." +
+                    "\n\t\"Key <key> found in VariantContext [...] but this key isn't defined in the VCFHeader\". HtsJsk requires all keys used to be defined in the header.");
         }
 
         writer.close();
