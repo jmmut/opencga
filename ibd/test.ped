@@ -1,6 +1,6 @@
-1 1 0 0 1  1  A A  G T
-2 1 0 0 1  1  A C  T G
-3 1 0 0 1  1  C C  G G
-4 1 0 0 1  2  A C  T T
-5 1 0 0 1  2  C C  G T
-6 1 0 0 1  2  C C  T T
+1 1 0 0 1  0  A A  G T  A A
+2 2 0 0 1  0  A C  T G  A T
+3 3 0 0 1  0  C C  G G  A A
+4 4 0 0 1  0  A C  T T  T T
+5 5 0 0 1  0  C C  G T  T A
+6 6 0 0 1  0  C C  T T  A T
