@@ -23,6 +23,31 @@ import static org.junit.Assert.*;
 public class IdentityByStateClusteringTest {
 
     @Test
+    public void testIBSPerformance() throws Exception {
+        String fileName = "ibs.vcf";
+        VariantSource source = new VariantSource(fileName, "fid", "sid", "studyName");
+        String line;
+
+        VariantVcfReader variantReader = new VariantVcfReader(source, IdentityByStateClusteringTest.class.getClassLoader().getResource(source.getFileName()).getPath());
+        variantReader.open();
+        variantReader.pre();
+        List<Variant> variants = variantReader.read(50);
+        variantReader.post();
+        variantReader.close();
+
+        IdentityByStateClustering ibsc = new IdentityByStateClustering();
+        List<String> samples = new ArrayList<>(variants.get(0).getStudy(source.getStudyId()).getSamplesName());
+        List<IdentityByState> ibsesFirstTime = ibsc.countIBS(variants, samples);
+
+        for (int j = 0; j < 10000; j++) {
+            for (int i = 0; i < ibsesFirstTime.size(); i++) {
+                List<IdentityByState> ibses = ibsc.countIBS(variants, samples);
+                ibsesFirstTime.get(i).add(ibses.get(i));
+            }
+        }
+    }
+
+    @Test
     public void testIBSByRegion() throws Exception {
         String fileName = "ibs.vcf";
         VariantSource source = new VariantSource(fileName, "fid", "sid", "studyName");
