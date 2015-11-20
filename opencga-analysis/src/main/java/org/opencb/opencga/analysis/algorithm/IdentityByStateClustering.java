@@ -50,7 +50,7 @@ public class IdentityByStateClustering {
 
 
         // loops
-        IdentityByState[] counts = new IdentityByState[getAmountOfPairs(samples)];
+        IdentityByState[] counts = new IdentityByState[getAmountOfPairs(samples.size())];
 
         for (int i = 0; i < counts.length; i++) {
             counts[i] = new IdentityByState();
@@ -110,12 +110,24 @@ public class IdentityByStateClustering {
         return whichIBS;
     }
 
+    /**
+     * Distance in genotype space. 
+     * As it is categorical, currently it is just computed as a ratio between shared genotypes and total genotypes.
+     * Could also be euclidian distance with formula
+     * @param counts
+     * @return
+     */
     public double getDistance(IdentityByState counts) {
         return (counts.ibs[1]*0.5 + counts.ibs[2])/(counts.ibs[0]+counts.ibs[1]+ counts.ibs[2]);
     }
-    
-    public int getAmountOfPairs(List<String> samples) {
-        return getCompoundIndex(samples.size()-2, samples.size()-1) +1;
+
+    /**
+     * n choose 2
+     * @param samplesCount amount of individuals
+     * @return amount of combinations of pairs
+     */
+    public int getAmountOfPairs(int samplesCount) {
+        return getCompoundIndex(samplesCount - 2, samplesCount - 1) + 1;
     }
 
     /**

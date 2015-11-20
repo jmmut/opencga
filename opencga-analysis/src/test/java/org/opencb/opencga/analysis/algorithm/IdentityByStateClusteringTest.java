@@ -7,6 +7,7 @@ import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.VariantSource;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -22,26 +23,48 @@ import static org.junit.Assert.*;
 public class IdentityByStateClusteringTest {
 
     @Test
-    public void testCountIBS() throws Exception {
+    public void testIBSByRegion() throws Exception {
         String fileName = "ibs.vcf";
         VariantSource source = new VariantSource(fileName, "fid", "sid", "studyName");
         String line;
 
-//        VariantVcfFactory factory = new VariantVcfFactory();
-//        InputStream inputStream = IdentityByStateClusteringTest.class.getClassLoader().getResourceAsStream(source.getFileName());
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-//        reader.readLine();
-//        while ((line = reader.readLine()) != null) {
-//            variants.addAll(factory.create(source, line));
-//        }
-//        reader.close();
         VariantVcfReader variantReader = new VariantVcfReader(source, IdentityByStateClusteringTest.class.getClassLoader().getResource(source.getFileName()).getPath());
         variantReader.open();
         variantReader.pre();
         List<Variant> variants = variantReader.read(50);
         variantReader.post();
         variantReader.close();
-        
+
+        IdentityByStateClustering ibsc = new IdentityByStateClustering();
+        List<String> samples = new ArrayList<>(variants.get(0).getStudy(source.getStudyId()).getSamplesName());
+        IdentityByState[] ibsesFirstHalf = ibsc.countIBS(variants.subList(0, variants.size()/2), samples);
+        IdentityByState[] ibsesSecondHalf = ibsc.countIBS(variants.subList(variants.size()/2, variants.size()), samples);
+
+        for (int i = 0; i < ibsesFirstHalf.length; i++) {
+            ibsesFirstHalf[i].add(ibsesSecondHalf[i]);
+        }
+
+        InputStream inputStream = IdentityByStateClusteringTest.class.getClassLoader().getResourceAsStream("ibs.genome");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+        reader.readLine();  // ignore header
+
+        assertIBS(ibsc, ibsesFirstHalf, reader);
+    }
+
+    @Test
+    public void testCountIBS() throws Exception {
+        String fileName = "ibs.vcf";
+        VariantSource source = new VariantSource(fileName, "fid", "sid", "studyName");
+        String line;
+
+        VariantVcfReader variantReader = new VariantVcfReader(source, IdentityByStateClusteringTest.class.getClassLoader().getResource(source.getFileName()).getPath());
+        variantReader.open();
+        variantReader.pre();
+        List<Variant> variants = variantReader.read(50);
+        variantReader.post();
+        variantReader.close();
+
         IdentityByStateClustering ibsc = new IdentityByStateClustering();
         List<String> samples = new ArrayList<>(variants.get(0).getStudy(source.getStudyId()).getSamplesName());
         IdentityByState[] ibses = ibsc.countIBS(variants, samples);
@@ -49,16 +72,20 @@ public class IdentityByStateClusteringTest {
 
         InputStream inputStream = IdentityByStateClusteringTest.class.getClassLoader().getResourceAsStream("ibs.genome");
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        
+
         reader.readLine();  // ignore header
 
-        line = reader.readLine();
+        assertIBS(ibsc, ibses, reader);
+    }
+
+    private void assertIBS(IdentityByStateClustering ibsc, IdentityByState[] ibsesFirstHalf, BufferedReader reader) throws IOException {
+        String line = reader.readLine();
         while (line != null) {
             String[] split = line.split("\t");
             int fileFirst = Integer.parseInt(split[0]);
             int fileSecond = Integer.parseInt(split[2]);
             int index = ibsc.getCompoundIndex(fileFirst, fileSecond);
-            IdentityByState ibs = ibses[index];
+            IdentityByState ibs = ibsesFirstHalf[index];
             String message = "elem " + fileFirst + ", " + fileSecond + " " + ibs.toString();
             assertEquals(message, Integer.parseInt(split[14]), ibs.ibs[0]);
             assertEquals(message, Integer.parseInt(split[15]), ibs.ibs[1]);
