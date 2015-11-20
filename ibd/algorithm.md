@@ -3,27 +3,28 @@
 Given a list of `m` variants with a list of `n` genotypes each, corresponding to `n` individuals, we 
 output ((n choose 2) times) this values:
 
-````
-[x] FID1   : family id of individual 1  
-[x] IID1   : individual 1 id  
-[x] FID2   : family id of individual 1  
-[x] IID2   : individual 2 id  
-[x] RT     : relationship type given PED file  
-[ ] EZ     : expected IBD sharing given PED file  
-[ ] Z0     : P(IBD=0)  
-[ ] Z1     : P(IBD=1)      
-[ ] Z2     : P(IBD=2)  
-[ ] PI_HAT : P(IBD=2)+0.5*P(IBD=1) ( proportion IBD )  
-[x] PHE    : Pairwise phenotypic code (1,0,-1 = AA, AU and UU pairs)  
-[x] DST    : IBS distance (IBS2 + 0.5*IBS1) / ( N SNP pairs )  
-[x] PPC    : IBS binomial test  
-[X] RATIO  : Of HETHET : IBS 0 SNPs (expected value is 2)  
-[x] IBS0   : Number of IBS 0 nonmissing loci  
-[x] IBS1   : Number of IBS 1 nonmissing loci  
-[x] IBS2   : Number of IBS 2 nonmissing loci  
-[x] HOMHOM : Number of IBS 0 SNP pairs used in PPC test  
-[x] HETHET : Number of IBS 2 het/het SNP pairs in PPC test  
-````
+understood | name | description
+-|-|-
+[x] | FID1   | family id of individual 1
+[x] | IID1   | individual 1 id
+[x] | FID2   | family id of individual 1
+[x] | IID2   | individual 2 id
+[x] | RT     | relationship type given PED file
+[ ] | EZ     | expected IBD sharing given PED file
+[ ] | Z0     | P(IBD=0)
+[ ] | Z1     | P(IBD=1)
+[ ] | Z2     | P(IBD=2)
+[ ] | PI_HAT | P(IBD=2)+0.5*P(IBD=1) ( proportion IBD )
+[x] | PHE    | Pairwise phenotypic code (1,0,-1 = AA, AU and UU pairs)
+[x] | DST    | IBS distance (IBS2 + 0.5*IBS1) / ( N SNP pairs )
+[x] | PPC    | IBS binomial test
+[X] | RATIO  | Of HETHET : IBS 0 SNPs (expected value is 2)
+[x] | IBS0   | Number of IBS 0 nonmissing loci
+[x] | IBS1   | Number of IBS 1 nonmissing loci
+[x] | IBS2   | Number of IBS 2 nonmissing loci
+[x] | HOMHOM | Number of IBS 0 SNP pairs used in PPC test
+[x] | HETHET | Number of IBS 2 het/het SNP pairs in PPC test
+
 
 - For each pair of individuals p1 and p2:
   - FID1, IID1, FID2, IID2, RT and PHE:
