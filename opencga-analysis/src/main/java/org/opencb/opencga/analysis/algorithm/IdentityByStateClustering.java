@@ -22,7 +22,7 @@ public class IdentityByStateClustering {
      * @return an array of IBS of length: (samples.size()*(samples.size() -1))/2
      * which is samples.size() choose 2
      */
-    IdentityByState[] countIBS(List<Variant> variants, List<String> samples) {
+    List<IdentityByState> countIBS(List<Variant> variants, List<String> samples) {
         return countIBS(variants.iterator(), samples);
     }
     
@@ -30,7 +30,7 @@ public class IdentityByStateClustering {
      * @return an array of IBS of length: (samples.size()*(samples.size() -1))/2
      * which is samples.size() choose 2
      */
-    IdentityByState[] countIBS(Variant variant, List<String> samples) {
+    List<IdentityByState> countIBS(Variant variant, List<String> samples) {
         return countIBS(Collections.singletonList(variant).iterator(), samples);
     }
 
@@ -38,7 +38,7 @@ public class IdentityByStateClustering {
      * @return an array of IBS of length: (samples.size()*(samples.size() -1))/2
      * which is samples.size() choose 2
      */
-    IdentityByState[] countIBS(Iterator<Variant> iterator, List<String> samples) {
+    List<IdentityByState> countIBS(Iterator<Variant> iterator, List<String> samples) {
         
         // assumptions
         if (samples.size() < 1 || samples.size() > 10000) {
@@ -50,10 +50,10 @@ public class IdentityByStateClustering {
 
 
         // loops
-        IdentityByState[] counts = new IdentityByState[getAmountOfPairs(samples.size())];
+        List<IdentityByState> counts = new ArrayList<>(getAmountOfPairs(samples.size()));
 
-        for (int i = 0; i < counts.length; i++) {
-            counts[i] = new IdentityByState();
+        for (int i = 0; i < getAmountOfPairs(samples.size()); i++) {
+            counts.add(new IdentityByState());
         }
 
         for (; iterator.hasNext(); ) {
@@ -67,7 +67,7 @@ public class IdentityByStateClustering {
                     Genotype genotypeJ = new Genotype(gtJ);
                     
                     int whichIBS = countSharedAlleles(allelesCount, genotypeI, genotypeJ);
-                    counts[getCompoundIndex(j, i)].ibs[whichIBS]++;
+                    counts.get(getCompoundIndex(j, i)).ibs[whichIBS]++;
                 }
             }
         }

@@ -37,11 +37,11 @@ public class IdentityByStateClusteringTest {
 
         IdentityByStateClustering ibsc = new IdentityByStateClustering();
         List<String> samples = new ArrayList<>(variants.get(0).getStudy(source.getStudyId()).getSamplesName());
-        IdentityByState[] ibsesFirstHalf = ibsc.countIBS(variants.subList(0, variants.size()/2), samples);
-        IdentityByState[] ibsesSecondHalf = ibsc.countIBS(variants.subList(variants.size()/2, variants.size()), samples);
+        List<IdentityByState> ibsesFirstHalf = ibsc.countIBS(variants.subList(0, variants.size()/2), samples);
+        List<IdentityByState> ibsesSecondHalf = ibsc.countIBS(variants.subList(variants.size()/2, variants.size()), samples);
 
-        for (int i = 0; i < ibsesFirstHalf.length; i++) {
-            ibsesFirstHalf[i].add(ibsesSecondHalf[i]);
+        for (int i = 0; i < ibsesFirstHalf.size(); i++) {
+            ibsesFirstHalf.get(i).add(ibsesSecondHalf.get(i));
         }
 
         InputStream inputStream = IdentityByStateClusteringTest.class.getClassLoader().getResourceAsStream("ibs.genome");
@@ -67,7 +67,7 @@ public class IdentityByStateClusteringTest {
 
         IdentityByStateClustering ibsc = new IdentityByStateClustering();
         List<String> samples = new ArrayList<>(variants.get(0).getStudy(source.getStudyId()).getSamplesName());
-        IdentityByState[] ibses = ibsc.countIBS(variants, samples);
+        List<IdentityByState> ibses = ibsc.countIBS(variants, samples);
 
 
         InputStream inputStream = IdentityByStateClusteringTest.class.getClassLoader().getResourceAsStream("ibs.genome");
@@ -78,14 +78,14 @@ public class IdentityByStateClusteringTest {
         assertIBS(ibsc, ibses, reader);
     }
 
-    private void assertIBS(IdentityByStateClustering ibsc, IdentityByState[] ibsesFirstHalf, BufferedReader reader) throws IOException {
+    private void assertIBS(IdentityByStateClustering ibsc, List<IdentityByState> ibsesFirstHalf, BufferedReader reader) throws IOException {
         String line = reader.readLine();
         while (line != null) {
             String[] split = line.split("\t");
             int fileFirst = Integer.parseInt(split[0]);
             int fileSecond = Integer.parseInt(split[2]);
             int index = ibsc.getCompoundIndex(fileFirst, fileSecond);
-            IdentityByState ibs = ibsesFirstHalf[index];
+            IdentityByState ibs = ibsesFirstHalf.get(index);
             String message = "elem " + fileFirst + ", " + fileSecond + " " + ibs.toString();
             assertEquals(message, Integer.parseInt(split[14]), ibs.ibs[0]);
             assertEquals(message, Integer.parseInt(split[15]), ibs.ibs[1]);
