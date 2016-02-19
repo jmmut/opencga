@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -530,6 +531,29 @@ public class VariantMongoDBAdaptor implements VariantDBAdaptor {
         return queryResult;
     }
 
+    @Override
+    public Map<Integer, List<Integer>> getReturnedSamples(Query query, QueryOptions options) {
+
+        List<Integer> studyIds = getStudyIds(query.getAsList(VariantQueryParams.RETURNED_STUDIES.key()), options);
+        if (studyIds.isEmpty()) {
+            studyIds = getStudyIds(getStudyConfigurationManager().getStudyNames(options), options);
+        }
+
+        List<String> returnedSamples = query.getAsStringList(VariantQueryParams.RETURNED_SAMPLES.key())
+                .stream().map(s -> s.contains(":") ? s.split(":")[1] : s).collect(Collectors.toList());
+        LinkedHashSet<String> returnedSamplesSet = new LinkedHashSet<>(returnedSamples);
+
+        Map<Integer, List<Integer>> samples = new HashMap<>(studyIds.size());
+        for (Integer studyId : studyIds) {
+            StudyConfiguration sc = getStudyConfigurationManager().getStudyConfiguration(studyId, options).first();
+            LinkedHashMap<String, Integer> returnedSamplesPosition = StudyConfiguration.getReturnedSamplesPosition(sc, returnedSamplesSet);
+            List<Integer> sampleNames = Arrays.asList(new Integer[returnedSamplesPosition.size()]);
+            returnedSamplesPosition.forEach((sample, position) -> sampleNames.set(position, sc.getSampleIds().get(sample)));
+            samples.put(studyId, sampleNames);
+        }
+
+        return samples;
+    }
 
 
     @Override
@@ -756,7 +780,7 @@ public class VariantMongoDBAdaptor implements VariantDBAdaptor {
             }
 
             if (query.containsKey(VariantQueryParams.ANNOT_XREF.key())) {
-                String xrefs = query.getString(VariantQueryParams.GENE.key());
+                String xrefs = query.getString(VariantQueryParams.ANNOT_XREF.key());
                 addQueryStringFilter(DBObjectToVariantConverter.ANNOTATION_FIELD + "." +
                         DBObjectToVariantAnnotationConverter.XREFS_FIELD + "." +
                         DBObjectToVariantAnnotationConverter.XREF_ID_FIELD, xrefs, builder, QueryOperation.AND);
@@ -816,6 +840,50 @@ public class VariantMongoDBAdaptor implements VariantDBAdaptor {
                 addFrequencyFilter(DBObjectToVariantConverter.ANNOTATION_FIELD + "." +
                                 DBObjectToVariantAnnotationConverter.POPULATION_FREQUENCIES_FIELD,
                         DBObjectToVariantAnnotationConverter.POPULATION_FREQUENCY_REFERENCE_FREQUENCY_FIELD, value, builder); // Same method addFrequencyFilter is used for reference and allele frequencies. Need to provide the field (reference/alternate) where to check the frequency
+            }
+
+            if (query.containsKey(VariantQueryParams.POPULATION_MINOR_ALLELE_FREQUENCY.key())) {
+                String value = query.getString(VariantQueryParams.POPULATION_MINOR_ALLELE_FREQUENCY.key());
+                addFrequencyFilter(DBObjectToVariantConverter.ANNOTATION_FIELD + "." +
+                                DBObjectToVariantAnnotationConverter.POPULATION_FREQUENCIES_FIELD,
+                        value, builder, (v, queryBuilder) -> {
+                            String op = getOperator(v);
+                            String obj = v.replaceFirst(op, "");
+
+                            double aDouble = Double.parseDouble(obj);
+                            switch(op) {
+                                case "<":
+                                    queryBuilder.or(
+                                            QueryBuilder.start(DBObjectToVariantAnnotationConverter.
+                                                    POPULATION_FREQUENCY_REFERENCE_FREQUENCY_FIELD).lessThan(aDouble).get(),
+                                            QueryBuilder.start(DBObjectToVariantAnnotationConverter.
+                                                    POPULATION_FREQUENCY_ALTERNATE_FREQUENCY_FIELD).lessThan(aDouble).get()
+                                    );
+                                    break;
+                                case "<=":
+                                    queryBuilder.or(
+                                            QueryBuilder.start(DBObjectToVariantAnnotationConverter.
+                                                    POPULATION_FREQUENCY_REFERENCE_FREQUENCY_FIELD).lessThanEquals(aDouble).get(),
+                                            QueryBuilder.start(DBObjectToVariantAnnotationConverter.
+                                                    POPULATION_FREQUENCY_ALTERNATE_FREQUENCY_FIELD).lessThanEquals(aDouble).get()
+                                    );
+                                    break;
+                                case ">":
+                                    queryBuilder.and(DBObjectToVariantAnnotationConverter.
+                                                    POPULATION_FREQUENCY_REFERENCE_FREQUENCY_FIELD).greaterThan(aDouble)
+                                            .and(DBObjectToVariantAnnotationConverter.
+                                                    POPULATION_FREQUENCY_ALTERNATE_FREQUENCY_FIELD).greaterThan(aDouble);
+                                    break;
+                                case ">=":
+                                    queryBuilder.and(DBObjectToVariantAnnotationConverter.
+                                                    POPULATION_FREQUENCY_REFERENCE_FREQUENCY_FIELD).greaterThanEquals(aDouble)
+                                            .and(DBObjectToVariantAnnotationConverter.
+                                                    POPULATION_FREQUENCY_ALTERNATE_FREQUENCY_FIELD).greaterThanEquals(aDouble);
+                                    break;
+                                default:
+                                    throw new IllegalArgumentException("Unsupported operator '" + op + "'");
+                            }
+                        });
             }
 
             /** STUDIES **/
@@ -1130,6 +1198,9 @@ public class VariantMongoDBAdaptor implements VariantDBAdaptor {
 
     private List<Integer> getStudyIds(List studiesNames, QueryOptions options) {
         List<Integer> studiesIds;
+        if (studiesNames == null) {
+            return Collections.emptyList();
+        }
         studiesIds = new ArrayList<>(studiesNames.size());
         for (Object studyObj : studiesNames) {
             if (studyObj instanceof Integer) {
@@ -1528,8 +1599,7 @@ public class VariantMongoDBAdaptor implements VariantDBAdaptor {
     }
 
     private QueryBuilder addCompQueryFilter(String key, String value, QueryBuilder builder) {
-        String op = value.substring(0, 2);
-        op = op.replaceFirst("[0-9]", "");
+        String op = getOperator(value);
         String obj = value.replaceFirst(op, "");
 
         switch(op) {
@@ -1557,6 +1627,12 @@ public class VariantMongoDBAdaptor implements VariantDBAdaptor {
                 break;
         }
         return builder;
+    }
+
+    private String getOperator(String value) {
+        String op = value.substring(0, 2);
+        op = op.replaceFirst("[0-9]", "");
+        return op;
     }
 
     /**
@@ -1606,6 +1682,20 @@ public class VariantMongoDBAdaptor implements VariantDBAdaptor {
      * @return                      QueryBuilder
      */
     private QueryBuilder addFrequencyFilter(String key, String alleleFrequencyField, String value, QueryBuilder builder) {
+        return addFrequencyFilter(key, value, builder, (v, qb) -> addCompQueryFilter(alleleFrequencyField, v, qb));
+    }
+
+    /**
+     * Accepts a list of filters separated with "," or ";" with the expression:
+     *      {STUDY}:{POPULATION}{OPERATION}{VALUE}
+     *
+     * @param key                   PopulationFrequency schema field
+     * @param value                 Value to parse
+     * @param builder               QueryBuilder
+     * @param addFilter             For complex filter
+     * @return                      QueryBuilder
+     */
+    private QueryBuilder addFrequencyFilter(String key, String value, QueryBuilder builder, BiConsumer<String, QueryBuilder> addFilter) {
 
         final List<String> list;
         QueryOperation operation = checkOperator(value);
@@ -1627,7 +1717,7 @@ public class VariantMongoDBAdaptor implements VariantDBAdaptor {
             QueryBuilder frequencyBuilder = new QueryBuilder();
             frequencyBuilder.and(DBObjectToVariantAnnotationConverter.POPULATION_FREQUENCY_STUDY_FIELD).is(study);
             frequencyBuilder.and(DBObjectToVariantAnnotationConverter.POPULATION_FREQUENCY_POP_FIELD).is(populationFrequency[0]);
-            addCompQueryFilter(alleleFrequencyField, populationFrequency[1], frequencyBuilder);
+            addFilter.accept(populationFrequency[1], frequencyBuilder);
             dbObjects.add(new BasicDBObject(key, new BasicDBObject("$elemMatch", frequencyBuilder.get())));
         }
         if (!dbObjects.isEmpty()) {
@@ -1718,7 +1808,9 @@ public class VariantMongoDBAdaptor implements VariantDBAdaptor {
 
             QueryBuilder statsBuilder = new QueryBuilder();
             statsBuilder.and(DBObjectToVariantStatsConverter.STUDY_ID).is(studyId);
-            statsBuilder.and(DBObjectToVariantStatsConverter.COHORT_ID).is(cohortId);
+            if (cohortId != null) {
+                statsBuilder.and(DBObjectToVariantStatsConverter.COHORT_ID).is(cohortId);
+            }
             addCompQueryFilter(key, operatorValue, statsBuilder);
             builder.and(DBObjectToVariantConverter.STATS_FIELD).elemMatch(statsBuilder.get());
         } else {

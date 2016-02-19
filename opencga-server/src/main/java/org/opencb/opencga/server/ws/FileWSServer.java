@@ -707,10 +707,10 @@ public class FileWSServer extends OpenCGAWSServer {
                                 @ApiParam(value = "CSV list of samples to be returned") @QueryParam("returnedSamples") String returnedSamples,
                                 @ApiParam(value = "CSV list of files to be returned.") @QueryParam("returnedFiles") String returnedFiles,
                                 @ApiParam(value = "Variants in specific files") @QueryParam("files") String files,
-                                @ApiParam(value = "Minor Allele Frequency: [<|>|<=|>=]{number}") @QueryParam("maf") String maf,
-                                @ApiParam(value = "Minor Genotype Frequency: [<|>|<=|>=]{number}") @QueryParam("mgf") String mgf,
-                                @ApiParam(value = "Number of missing alleles: [<|>|<=|>=]{number}") @QueryParam("missingAlleles") String missingAlleles,
-                                @ApiParam(value = "Number of missing genotypes: [<|>|<=|>=]{number}") @QueryParam("missingGenotypes") String missingGenotypes,
+                                @ApiParam(value = "Minor Allele Frequency: [{study:}]{cohort}[<|>|<=|>=]{number}") @QueryParam("maf") String maf,
+                                @ApiParam(value = "Minor Genotype Frequency: [{study:}]{cohort}[<|>|<=|>=]{number}") @QueryParam("mgf") String mgf,
+                                @ApiParam(value = "Number of missing alleles: [{study:}]{cohort}[<|>|<=|>=]{number}") @QueryParam("missingAlleles") String missingAlleles,
+                                @ApiParam(value = "Number of missing genotypes: [{study:}]{cohort}[<|>|<=|>=]{number}") @QueryParam("missingGenotypes") String missingGenotypes,
                                 @ApiParam(value = "Specify if the variant annotation must exists.") @QueryParam("annotationExists") boolean annotationExists,
                                 @ApiParam(value = "Samples with a specific genotype: {samp_1}:{gt_1}(,{gt_n})*(;{samp_n}:{gt_1}(,{gt_n})*)* e.g. HG0097:0/0;HG0098:0/1,1/1") @QueryParam("genotype") String genotype,
                                 @ApiParam(value = "Consequence type SO term list. e.g. SO:0000045,SO:0000046") @QueryParam("annot-ct") String annot_ct,
@@ -720,6 +720,7 @@ public class FileWSServer extends OpenCGAWSServer {
                                 @ApiParam(value = "Sift value: [<|>|<=|>=]{number}") @QueryParam("sift") String sift,
 //                                @ApiParam(value = "") @QueryParam("protein_substitution") String protein_substitution,
                                 @ApiParam(value = "Conservation score: {conservation_score}[<|>|<=|>=]{number}") @QueryParam("conservation") String conservation,
+                                @ApiParam(value = "Population minor allele frequency: {study}:{population}[<|>|<=|>=]{number}") @QueryParam("annot-population-maf") String annotPopulationMaf,
                                 @ApiParam(value = "Alternate Population Frequency: {study}:{population}[<|>|<=|>=]{number}") @QueryParam("alternate_frequency") String alternate_frequency,
                                 @ApiParam(value = "Reference Population Frequency: {study}:{population}[<|>|<=|>=]{number}") @QueryParam("reference_frequency") String reference_frequency,
                                 @ApiParam(value = "Returned genotype for unknown genotypes. Common values: [0/0, 0|0, ./.]") @QueryParam("unknownGenotype") String unknownGenotype,
@@ -807,7 +808,7 @@ public class FileWSServer extends OpenCGAWSServer {
     }
 
     public static class UpdateFile {
-//        public String name;
+        public String name;
         public File.Format format;
         public File.Bioformat bioformat;
 //        public String path;
