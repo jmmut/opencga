@@ -8,6 +8,7 @@ import htsjdk.variant.vcf.VCFCodec;
 import htsjdk.variant.vcf.VCFHeader;
 import htsjdk.variant.vcf.VCFHeaderVersion;
 import org.apache.avro.generic.GenericRecord;
+import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
 import org.opencb.biodata.models.variant.*;
 import org.opencb.biodata.models.variant.avro.FileEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
@@ -15,7 +16,6 @@ import org.opencb.biodata.models.variant.exceptions.NotAVariantException;
 import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
 import org.opencb.biodata.tools.variant.stats.VariantGlobalStatsCalculator;
 import org.opencb.commons.run.ParallelTaskRunner;
-import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
 import org.opencb.opencga.storage.core.runner.StringDataWriter;
 import org.opencb.opencga.storage.core.variant.io.json.GenericRecordAvroJsonMixin;
@@ -29,29 +29,26 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
- * Created on 01/10/15
+ * Created on 01/10/15.
  *
  * @author Jacobo Coll &lt;jacobo167@gmail.com&gt;
  */
 public class VariantAvroTransformTask implements ParallelTaskRunner.Task<String, ByteBuffer> {
-
 
     private final VariantFactory factory;
     private final VariantSource source;
     private final AvroEncoder<VariantAvro> encoder;
     private boolean includeSrc = false;
 
-    protected final static Logger logger = LoggerFactory.getLogger(VariantAvroTransformTask.class);
     private final VCFCodec vcfCodec;
     private final VariantContextToVariantConverter converter;
     private final VariantNormalizer normalizer;
     private final Path outputFileJsonFile;
     private final VariantGlobalStatsCalculator variantStatsTask;
 
+    protected final Logger logger = LoggerFactory.getLogger(VariantAvroTransformTask.class);
 
     public VariantAvroTransformTask(VariantFactory factory,
                                     VariantSource source, Path outputFileJsonFile, VariantGlobalStatsCalculator variantStatsTask) {
@@ -123,7 +120,6 @@ public class VariantAvroTransformTask implements ParallelTaskRunner.Task<String,
                     }
                 }
                 variantStatsTask.apply(variants);
-
             }
         } else {
             List<VariantContext> variantContexts = new ArrayList<>(batch.size());
@@ -135,9 +131,7 @@ public class VariantAvroTransformTask implements ParallelTaskRunner.Task<String,
             }
 
             List<Variant> variants = converter.apply(variantContexts);
-
             List<Variant> normalizedVariants = normalizer.apply(variants);
-
             variantStatsTask.apply(normalizedVariants);
 
             for (Variant normalizedVariant : normalizedVariants) {
