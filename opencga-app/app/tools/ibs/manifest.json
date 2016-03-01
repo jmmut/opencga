@@ -1,0 +1,59 @@
+{
+  "author": {
+    "name": "",
+    "email": ""
+  },
+  "version": "1.0",
+  "id": "ibs_tool",
+  "name": "Identity By State Tool",
+  "description": "",
+  "icon": {
+    "size": "",
+    "data": ""
+  },
+  "website": "http://",
+  "publication": "",
+  "globalParams": [],
+  "executions": [
+    {
+      "id": "ibs_execution",
+      "name": "Identity By State Clustering with hpg-bigdata",
+      "executable": "launch-hpg-bigdata-ibs.sh",
+      "inputParams": [],
+      "outputParam": "output",
+      "validParams": [{
+        "name": "c",
+        "description": "org.opencb.hpg.bigdata.core.connectors.Connector implementation class.",
+        "required": "false"
+      }, {
+        "name": "f",
+        "description": "Input type {file, hbase}",
+        "required": "true"
+      }, {
+        "name": "i",
+        "description": "Input fileName or hbase tableName",
+        "required": "true"
+      }, {
+        "name":"t",
+        "description": "output type {file, stdout, hbase}",
+        "required": "true"
+      }, {
+        "name": "o",
+        "description": "output. required (a fileName or a tableName) if -t is \"file\" or \"hbase\"",
+        "required": "false"
+      }, {
+        "name":"s",
+        "description": "spark home",
+        "required": "true"
+      }, {
+        "name":"j",
+        "description": "jar with the spark classes",
+        "required": "true"
+      }],
+      "configAttr": [],
+      "testCmd": "launch-hpg-bigdata-ibs.sh --help"
+    }
+  ],
+  "examples": [],
+  "acl": []
+}
